@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  CONTRACT
+  TEMPORARY
+}
+
+enum ApplicationStatus {
+  SAVED
+  APPLIED
+  OA
+  INTERVIEW
+  FINAL_ROUND
+  OFFER
+  REJECTED
+  ARCHIVED
+}
+
+model User {
+  id String @id @default(cuid())
+  name String?
+  email String @unique
+  passwordHash String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id String @unique
+  userId String
+  companyName String
+  roleTitle String
+  jobUrl String?
+  location String?
+  salaryMin Int?
+  salaryMax Int?
+  jobType JobType?
+  status ApplicationStatus @default(SAVED)
+  description String?
+  dateSaved DateTime @default(now())
+  dateApplied DateTime?
+  reminderDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  notes Note[]
+  contacts Contact[]
+  activityLogs ActivityLog[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([reminderDate])
+}
+
+model Note {
+  id String @id @default(cuid())
+  applicationId String
+  content String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+model Contact {
+  id             String         @id @default(cuid())
+  applicationId  String
+  name           String
+  email          String?
+  title          String?
+  linkedinUrl    String?
+  createdAt      DateTime       @default(now())
+
+  application    JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+
+model ActivityLog {
+  id String           @id @default(cuid())
+  applicationId       String
+  action String
+  metadata Json?
+  createdAt DateTime  @default(now())
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
